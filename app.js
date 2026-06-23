@@ -1,6 +1,7 @@
 const STORAGE_KEY = "solana-token-monitor-vercel-v1";
 const LEGACY_KEYS = ["solana-token-monitor-v3", "solana-token-monitor-v2", "solana-token-monitor-v1"];
 const DEX_API = "https://api.dexscreener.com";
+const TOKEN_API = "/api/token";
 
 const fallback = {
   pages: [
@@ -145,9 +146,19 @@ async function fetchDexPairs(address) {
 }
 
 async function fetchToken(address) {
-  const pairs = await fetchDexPairs(address);
-  if (!pairs.length) return fallbackToken(address);
-  return pairToToken(address, pairs[0]);
+  try {
+    const data = await fetchJson(`${TOKEN_API}?address=${encodeURIComponent(address)}`);
+    const token = data.token || data;
+    if (data.error && !token) throw new Error(data.error);
+    return {
+      ...token,
+      pairAddress: token.pairAddress || token.poolAddress || "",
+    };
+  } catch {
+    const pairs = await fetchDexPairs(address);
+    if (!pairs.length) return fallbackToken(address);
+    return pairToToken(address, pairs[0]);
+  }
 }
 
 function pairToToken(address, pair) {
