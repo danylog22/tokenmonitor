@@ -211,13 +211,20 @@ async function refreshToken(token) {
 }
 
 function chartUrl(token) {
-  const pair = resolvedPairAddress(token);
-  return `https://dexscreener.com/solana/${pair}?embed=1&theme=dark&trades=0&info=0`;
+  const baseUrl = canonicalDexUrl(token);
+  return `${baseUrl}?embed=1&theme=dark&trades=0&info=0`;
 }
 
 function resolvedPairAddress(token) {
   const pair = token.pairAddress || token.poolAddress || "";
   return pair && pair !== token.address ? pair : "";
+}
+
+function canonicalDexUrl(token) {
+  if (token.url && token.url.includes("dexscreener.com/solana/")) {
+    return token.url.split("?")[0];
+  }
+  return `https://dexscreener.com/solana/${resolvedPairAddress(token)}`;
 }
 
 function render() {
@@ -297,14 +304,14 @@ function renderChart(token, page) {
 }
 
 async function resolveTokenForChart(token) {
-  if (resolvedPairAddress(token) && token.logo) return;
+  const oldPair = resolvedPairAddress(token);
   try {
     const fresh = await fetchToken(token.address);
     const next = { ...token, ...fresh, id: token.id };
     Object.assign(token, next);
     saveState();
     updateTokenStats(token);
-    updateChartFrame(token);
+    updateChartFrame(token, oldPair);
   } catch {
     const card = document.querySelector(`[data-token-id="${token.id}"]`);
     const status = card?.querySelector(".chart-status");
@@ -312,7 +319,7 @@ async function resolveTokenForChart(token) {
   }
 }
 
-function updateChartFrame(token) {
+function updateChartFrame(token, oldPair = "") {
   const card = document.querySelector(`[data-token-id="${token.id}"]`);
   if (!card) return;
   const iframe = card.querySelector("iframe");
@@ -322,7 +329,7 @@ function updateChartFrame(token) {
   status.hidden = true;
   iframe.hidden = false;
   const nextSrc = chartUrl(token);
-  if (iframe.src !== nextSrc) iframe.src = nextSrc;
+  if (iframe.src !== nextSrc || oldPair !== pair) iframe.src = nextSrc;
 }
 
 function updateTokenStats(token) {
