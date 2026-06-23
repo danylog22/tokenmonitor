@@ -177,8 +177,8 @@ function fallbackToken(address) {
   return {
     id: crypto.randomUUID(),
     address,
-    poolAddress: address,
-    pairAddress: address,
+    poolAddress: "",
+    pairAddress: "",
     chartTokenSide: "base",
     dexId: "Dexscreener",
     url: `https://dexscreener.com/solana/${address}`,
@@ -200,8 +200,13 @@ async function refreshToken(token) {
 }
 
 function chartUrl(token) {
-  const pair = token.pairAddress || token.poolAddress || token.address;
+  const pair = resolvedPairAddress(token);
   return `https://dexscreener.com/solana/${pair}?embed=1&theme=dark&trades=0&info=0`;
+}
+
+function resolvedPairAddress(token) {
+  const pair = token.pairAddress || token.poolAddress || "";
+  return pair && pair !== token.address ? pair : "";
 }
 
 function render() {
@@ -230,7 +235,7 @@ function render() {
     els.chartGrid.appendChild(renderChart(token, activePage));
   });
 
-  activePage.tokens.forEach(resolveMissingTokenImage);
+  activePage.tokens.forEach(resolveTokenForChart);
   scheduleAutoRefresh();
 }
 
@@ -240,6 +245,7 @@ function renderChart(token, page) {
   const title = node.querySelector(".token-title");
   const meta = node.querySelector(".token-meta");
   const iframe = node.querySelector("iframe");
+  const chartStatus = node.querySelector(".chart-status");
   const openLink = node.querySelector(".open-link");
   const avatarImg = node.querySelector(".token-avatar-img");
   const avatarFallback = node.querySelector(".token-avatar-fallback");
@@ -258,7 +264,11 @@ function renderChart(token, page) {
   node.querySelector(".token-avatar-overlay").title = `${token.symbol || "Token"} · ${shortAddress(token.address)}`;
   title.textContent = `${token.symbol || "TOKEN"} / SOL`;
   meta.textContent = `${token.name || "Solana Token"} · ${token.dexId || "DEX"} · ${shortAddress(token.address)}`;
-  iframe.src = chartUrl(token);
+  const pair = resolvedPairAddress(token);
+  iframe.hidden = !pair;
+  chartStatus.hidden = Boolean(pair);
+  chartStatus.textContent = pair ? "" : "Resolviendo par...";
+  if (pair) iframe.src = chartUrl(token);
   openLink.href = token.url || `https://dexscreener.com/solana/${token.pairAddress || token.poolAddress || token.address}`;
 
   node.querySelector('[data-stat="marketCap"]').textContent = formatCurrency(token.marketCap);
@@ -273,6 +283,35 @@ function renderChart(token, page) {
   });
 
   return node;
+}
+
+async function resolveTokenForChart(token) {
+  if (resolvedPairAddress(token) && token.logo) return;
+  try {
+    const fresh = await fetchToken(token.address);
+    const next = { ...token, ...fresh, id: token.id };
+    Object.assign(token, next);
+    saveState();
+    updateTokenStats(token);
+    updateChartFrame(token);
+  } catch {
+    const card = document.querySelector(`[data-token-id="${token.id}"]`);
+    const status = card?.querySelector(".chart-status");
+    if (status && !resolvedPairAddress(token)) status.textContent = "No pude resolver el par";
+  }
+}
+
+function updateChartFrame(token) {
+  const card = document.querySelector(`[data-token-id="${token.id}"]`);
+  if (!card) return;
+  const iframe = card.querySelector("iframe");
+  const status = card.querySelector(".chart-status");
+  const pair = resolvedPairAddress(token);
+  if (!pair) return;
+  status.hidden = true;
+  iframe.hidden = false;
+  const nextSrc = chartUrl(token);
+  if (iframe.src !== nextSrc) iframe.src = nextSrc;
 }
 
 function updateTokenStats(token) {
