@@ -57,6 +57,7 @@ function pairToToken(address, pair) {
   return {
     id: randomUUID(),
     address,
+    contractAddress: address,
     poolAddress: pair.pairAddress,
     pairAddress: pair.pairAddress,
     chartTokenSide: isBase ? "base" : "quote",
@@ -78,6 +79,7 @@ function fallbackToken(address) {
   return {
     id: randomUUID(),
     address,
+    contractAddress: address,
     poolAddress: "",
     pairAddress: "",
     chartTokenSide: "base",

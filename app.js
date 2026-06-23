@@ -167,6 +167,7 @@ function pairToToken(address, pair) {
   return {
     id: crypto.randomUUID(),
     address,
+    contractAddress: address,
     poolAddress: pair.pairAddress,
     pairAddress: pair.pairAddress,
     chartTokenSide: isBase ? "base" : "quote",
@@ -188,6 +189,7 @@ function fallbackToken(address) {
   return {
     id: crypto.randomUUID(),
     address,
+    contractAddress: address,
     poolAddress: "",
     pairAddress: "",
     chartTokenSide: "base",
@@ -221,9 +223,6 @@ function resolvedPairAddress(token) {
 }
 
 function canonicalDexUrl(token) {
-  if (token.url && token.url.includes("dexscreener.com/solana/")) {
-    return token.url.split("?")[0];
-  }
   return `https://dexscreener.com/solana/${resolvedPairAddress(token)}`;
 }
 
@@ -288,6 +287,9 @@ function renderChart(token, page) {
   chartStatus.textContent = pair ? "" : "Resolviendo par...";
   if (pair) iframe.src = chartUrl(token);
   openLink.href = token.url || `https://dexscreener.com/solana/${token.pairAddress || token.poolAddress || token.address}`;
+  if (resolvedPairAddress(token)) {
+    openLink.href = `https://dexscreener.com/solana/${resolvedPairAddress(token)}`;
+  }
 
   node.querySelector('[data-stat="marketCap"]').textContent = formatCurrency(token.marketCap);
   node.querySelector('[data-stat="price"]').textContent = formatCurrency(token.priceUsd);
