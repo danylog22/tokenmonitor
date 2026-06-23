@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Solana Token Monitor</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-mark">S</span>
+        <div>
+          <strong>Solana Monitor</strong>
+          <small>Market cap multicharts</small>
+        </div>
+        <button id="sidebarToggle" class="sidebar-toggle" title="Contraer barra lateral" aria-label="Contraer barra lateral">‹</button>
+      </div>
+
+      <section class="panel">
+        <div class="panel-title">
+          <span>Paginas</span>
+          <button id="addPageBtn" class="icon-btn" title="Nueva pagina">+</button>
+        </div>
+        <div id="pageList" class="page-list"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">
+          <span>Agregar token</span>
+        </div>
+        <form id="addTokenForm" class="token-form">
+          <label>
+            Contract address
+            <input id="tokenAddress" autocomplete="off" placeholder="CA de Solana" />
+          </label>
+          <button type="submit">Agregar grafica</button>
+        </form>
+        <p class="hint">Pega el CA del token. La app busca el par de Solana con mas liquidez en Dexscreener.</p>
+      </section>
+
+      <section class="panel compact">
+        <div class="metric-row">
+          <span>Vista</span>
+          <select id="gridSelect">
+            <option value="1">1 grafica</option>
+            <option value="2">2 columnas</option>
+            <option value="3" selected>3 columnas</option>
+            <option value="4">4 columnas</option>
+          </select>
+        </div>
+        <div class="metric-row">
+          <span>Timeframe</span>
+          <select id="timeframeSelect">
+            <option value="1s">1s</option>
+            <option value="1m" selected>1m</option>
+            <option value="5m">5m</option>
+            <option value="15m">15m</option>
+            <option value="1h">1h</option>
+            <option value="4h">4h</option>
+            <option value="1d">1d</option>
+          </select>
+        </div>
+        <div class="metric-row">
+          <span>Auto-refresh</span>
+          <button id="refreshBtn" class="ghost-btn">Actualizar</button>
+        </div>
+      </section>
+    </aside>
+
+    <main class="workspace">
+      <header class="topbar">
+        <div>
+          <h1 id="pageTitle">Main</h1>
+          <p id="pageSubtitle">0 graficas activas</p>
+        </div>
+        <div class="top-actions">
+          <input id="pageNameInput" placeholder="Renombrar pagina" />
+          <button id="renamePageBtn" class="ghost-btn">Renombrar</button>
+          <button id="deletePageBtn" class="danger-btn">Eliminar pagina</button>
+        </div>
+      </header>
+
+      <section id="emptyState" class="empty-state">
+        <h2>Agrega tu primer token</h2>
+        <p>Pega un CA de Solana en el panel izquierdo para crear una grafica con market cap, precio, liquidez y volumen.</p>
+      </section>
+
+      <section id="chartGrid" class="chart-grid cols-3"></section>
+    </main>
+
+    <template id="chartTemplate">
+      <article class="chart-card">
+        <header class="chart-header">
+          <div class="token-heading">
+            <img class="token-logo" alt="" />
+            <div>
+              <h2 class="token-title">Token</h2>
+              <p class="token-meta">Solana</p>
+            </div>
+          </div>
+          <div class="chart-actions">
+            <a class="open-link" target="_blank" rel="noreferrer" title="Abrir en Dexscreener">Open</a>
+            <button class="remove-token" title="Quitar grafica">x</button>
+          </div>
+        </header>
+
+        <div class="token-avatar-overlay" title="Imagen del token">
+          <img class="token-avatar-img" alt="" />
+          <span class="token-avatar-fallback">?</span>
+        </div>
+
+        <div class="stats-grid">
+          <div><span>Market cap</span><strong data-stat="marketCap">-</strong></div>
+          <div><span>Precio</span><strong data-stat="price">-</strong></div>
+          <div><span>Liquidez</span><strong data-stat="liquidity">-</strong></div>
+          <div><span>Vol 24h</span><strong data-stat="volume">-</strong></div>
+        </div>
+
+        <div class="chart-frame">
+          <iframe title="Dexscreener chart" loading="lazy"></iframe>
+        </div>
+      </article>
+    </template>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
